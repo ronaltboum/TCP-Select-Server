@@ -1,0 +1,24 @@
+Documentation and TODO list:
+
+compilation instructions:
+a makefile is given for the Server
+There's also a simple client implementation which can be compiled on linux with:
+gcc -o simpleClient simpleClient.cpp
+
+There are documentations for the message protocol and some other classes in the classes' header files.
+The tcp server is implemented with the select system call.  A single thread handles all the sockets' I/O (and therefore the sockets and I/O functions are non blocking),  and also enqueues messages from the clients in an internal queue.  Worker threads (determined with the help of hardware_concurrency() function)  dequeue messages from the queue and call the callback function which is given to the server's c'tor as a parameter.  The server is built to serve a small or medium number of clients concurrently where the clients send short messages (and the server replies short answers like OK),  and the heavy action is done by the worker threads who can perform actions like read/write from/to disk or heavy calculations.
+
+The server has a thread member which is activated in the class c'tor (following the RAII pattern) and is being joined in the class d'tor.  This thread starts and runs the server.
+
+The main drawback of this current implementation is that the enqueue function is blocking (uses a mutex) and this is critical since the single thread which handles all of the sockets' I/O also enqueues the messages received by the clients and therefore this thread could be blocked in the enqueue function.
+However,it's perfectly fine to be blocked in the dequeue function since the dequeing is done by the worker threads.
+A potential fix for this problem would be to implement a lock-free queue (or block only the consumers and not the single producer.)
+
+Some more TODO's and suggestions:
+use poll()
+limit the size of the queue (to avoid a situation where the worker threads work really slow in comparison with the rate in which the I/O master thread enques the messages)
+complete the signal handling
+implement a similar model using async
+switch to a C++ style instead of a C style
+get rid of the compiler warnings
+
