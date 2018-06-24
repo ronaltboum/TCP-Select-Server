@@ -1,4 +1,4 @@
-#include "protocol.h"
+#include "peer.h"
 
 
 //returns 1 if message was completly sent.  0 in case message was partially sent.  -1 in case of error
